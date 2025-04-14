@@ -5,6 +5,13 @@ import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import MatchingInterface from '../components/MatchingInterface';
 
+interface SessionUser {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
 export default function Home() {
   const { data: session } = useSession();
   const [guestId, setGuestId] = useState<string>('');
@@ -47,7 +54,8 @@ export default function Home() {
   };
 
   // Get effective user ID from session or guest ID
-  const userId = (session?.user as any)?.id || guestId;
+  const sessionUserId = (session?.user as SessionUser)?.id;
+  const userId = sessionUserId || guestId;
 
   return (
     <main className="min-h-screen flex flex-col py-10 px-4 sm:px-6 lg:px-8 bg-gray-900">

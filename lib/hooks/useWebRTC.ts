@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import { MediaStatus } from '../../types';
 import { useSocket } from './useSocket';
@@ -7,6 +7,11 @@ interface UseWebRTCProps {
   userId: string;
   roomId: string;
   remoteUserId?: string;
+}
+
+interface PeerSignalData {
+  type: string;
+  [key: string]: any;
 }
 
 export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
@@ -88,16 +93,14 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
     };
   }, [socket, remoteUserId, localStream]);
 
-  // Initialize a peer connection
-  const initializePeerConnection = (stream: MediaStream, incomingSignal?: any) => {
+  const initializePeerConnection = useCallback((stream: MediaStream, incomingSignal?: PeerSignalData) => {
     const peer = new Peer({
       initiator: !incomingSignal,
       trickle: false,
       stream
     });
     
-    peer.on('signal', (signal) => {
-      // Send the signal to the remote peer via socket
+    peer.on('signal', (signal: PeerSignalData) => {
       if (remoteUserId) {
         sendSignal(remoteUserId, signal);
       }
@@ -105,12 +108,9 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
     
     peer.on('stream', (stream) => {
       setRemoteStream(stream);
-      
-      // Set the stream to the remote video element
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
       }
-      
       setIsConnected(true);
     });
     
@@ -124,13 +124,36 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
       setRemoteStream(null);
     });
     
-    // If this is the receiver, signal with the incoming data
     if (incomingSignal) {
       peer.signal(incomingSignal);
     }
     
     peerRef.current = peer;
-  };
+  }, [remoteUserId, sendSignal]);
+
+  const endCall = useCallback(() => {
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+    }
+    if (peerRef.current) {
+      peerRef.current.destroy();
+    }
+    setLocalStream(null);
+    setRemoteStream(null);
+    setIsConnected(false);
+  }, [localStream]);
+
+  useEffect(() => {
+    if (localStream && remoteUserId) {
+      initializePeerConnection(localStream);
+    }
+  }, [localStream, remoteUserId, initializePeerConnection]);
+
+  useEffect(() => {
+    return () => {
+      endCall();
+    };
+  }, [endCall]);
 
   // Toggle video
   const toggleVideo = () => {
@@ -165,41 +188,6 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
     
     setMediaStatus(prev => ({ ...prev, audio: enabled }));
   };
-
-  // End the call
-  const endCall = () => {
-    // Stop all tracks in the local stream
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
-    
-    // Close the peer connection
-    if (peerRef.current) {
-      peerRef.current.destroy();
-    }
-    
-    setLocalStream(null);
-    setRemoteStream(null);
-    setIsConnected(false);
-  };
-
-  useEffect(() => {
-    if (localStream) {
-      initializePeerConnection();
-    }
-  }, [localStream, initializePeerConnection]);
-
-  useEffect(() => {
-    if (remoteUserId) {
-      initializePeerConnection();
-    }
-  }, [remoteUserId, initializePeerConnection]);
-
-  useEffect(() => {
-    return () => {
-      endCall();
-    };
-  }, [endCall]);
 
   return {
     localStream,

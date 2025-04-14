@@ -18,6 +18,18 @@ interface SocketError {
   code?: string;
 }
 
+interface SignalData {
+  userId: string;
+  signal: RTCSessionDescriptionInit | RTCIceCandidate;
+}
+
+interface MessageData {
+  roomId: string;
+  content: string;
+  senderId: string;
+  timestamp: string;
+}
+
 export const useSocket = (userId?: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const router = useRouter();
@@ -217,13 +229,13 @@ export const useSocket = (userId?: string) => {
   };
 
   // Function to send a chat message
-  const sendMessage = (roomId: string, message: any) => {
+  const sendMessage = (roomId: string, message: MessageData) => {
     if (!socket?.connected) return;
     socket.emit('message:send', { roomId, message });
   };
 
   // Function to send WebRTC signaling data
-  const sendSignal = (targetUserId: string, signal: any) => {
+  const sendSignal = (targetUserId: string, signal: RTCSessionDescriptionInit | RTCIceCandidate) => {
     if (!socket?.connected) return;
     socket.emit('signal', { userId: targetUserId, signal });
   };
@@ -237,18 +249,6 @@ export const useSocket = (userId?: string) => {
       socket = io(SOCKET_SERVER_URL);
       socket.connect();
     }
-  };
-
-  const handleSocketEvent = (event: SocketEvent) => {
-    // Handle socket events
-  };
-
-  const handleSocketError = (error: SocketError) => {
-    // Handle socket errors
-  };
-
-  const handleSocketMessage = (message: string) => {
-    // Handle socket messages
   };
 
   return {
