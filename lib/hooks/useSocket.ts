@@ -8,6 +8,10 @@ let socket: Socket | null = null;
 // Socket server URL from environment variables or default
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
+interface MatchPreferences {
+  [key: string]: string | number | boolean;
+}
+
 interface SocketEvent {
   type: string;
   data: unknown;
@@ -169,7 +173,7 @@ export const useSocket = (userId?: string) => {
   }, [userId, router]);
 
   // Function to find a match
-  const findMatch = (preferences: any = {}) => {
+  const findMatch = (preferences: MatchPreferences = {}) => {
     if (!userId) {
       console.error('Cannot find match - no user ID provided');
       return;

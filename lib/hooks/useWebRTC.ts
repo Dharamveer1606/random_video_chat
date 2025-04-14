@@ -9,10 +9,11 @@ interface UseWebRTCProps {
   remoteUserId?: string;
 }
 
-interface PeerSignalData {
-  type: string;
-  [key: string]: any;
-}
+type SimplePeerSignal = {
+  type: 'offer' | 'answer' | 'candidate';
+  sdp?: string;
+  candidate?: RTCIceCandidateInit;
+};
 
 export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -27,80 +28,14 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
   
   const { socket, sendSignal } = useSocket(userId);
 
-  // Initialize media stream
-  useEffect(() => {
-    const initializeMedia = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: mediaStatus.video, 
-          audio: mediaStatus.audio 
-        });
-        
-        setLocalStream(stream);
-        
-        // Set the stream to the local video element
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-        
-        // Initialize peer connection if we have a remote user
-        if (remoteUserId) {
-          initializePeerConnection(stream);
-        }
-      } catch (err) {
-        console.error('Error accessing media devices:', err);
-        setError('Failed to access camera and microphone. Please check permissions.');
-      }
-    };
-    
-    initializeMedia();
-    
-    // Cleanup function
-    return () => {
-      // Stop all tracks in the local stream
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-      
-      // Close the peer connection
-      if (peerRef.current) {
-        peerRef.current.destroy();
-      }
-    };
-  }, [roomId, remoteUserId, mediaStatus.video, mediaStatus.audio]);
-
-  // Setup socket event listeners for WebRTC signaling
-  useEffect(() => {
-    if (!socket) return;
-    
-    // Handle incoming signals from the remote peer
-    const handleSignal = (data: { userId: string; signal: any }) => {
-      if (data.userId !== remoteUserId) return;
-      
-      // If we don't have a peer connection yet, create one as the receiver
-      if (!peerRef.current && localStream) {
-        initializePeerConnection(localStream, data.signal);
-      } else if (peerRef.current) {
-        // If we have a peer connection, process the signal
-        peerRef.current.signal(data.signal);
-      }
-    };
-    
-    socket.on('signal', handleSignal);
-    
-    return () => {
-      socket.off('signal', handleSignal);
-    };
-  }, [socket, remoteUserId, localStream]);
-
-  const initializePeerConnection = useCallback((stream: MediaStream, incomingSignal?: PeerSignalData) => {
+  const initializePeerConnection = useCallback((stream: MediaStream, incomingSignal?: SimplePeerSignal) => {
     const peer = new Peer({
       initiator: !incomingSignal,
       trickle: false,
       stream
     });
     
-    peer.on('signal', (signal: PeerSignalData) => {
+    peer.on('signal', (signal: SimplePeerSignal) => {
       if (remoteUserId) {
         sendSignal(remoteUserId, signal);
       }
@@ -143,17 +78,57 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
     setIsConnected(false);
   }, [localStream]);
 
+  // Initialize media stream
   useEffect(() => {
-    if (localStream && remoteUserId) {
-      initializePeerConnection(localStream);
-    }
-  }, [localStream, remoteUserId, initializePeerConnection]);
-
-  useEffect(() => {
+    const initializeMedia = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: mediaStatus.video, 
+          audio: mediaStatus.audio 
+        });
+        
+        setLocalStream(stream);
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        
+        if (remoteUserId && stream) {
+          initializePeerConnection(stream);
+        }
+      } catch (err) {
+        console.error('Error accessing media devices:', err);
+        setError('Failed to access camera and microphone. Please check permissions.');
+      }
+    };
+    
+    initializeMedia();
+    
     return () => {
       endCall();
     };
-  }, [endCall]);
+  }, [roomId, remoteUserId, mediaStatus.video, mediaStatus.audio, initializePeerConnection, endCall]);
+
+  // Setup socket event listeners for WebRTC signaling
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleSignal = (data: { userId: string; signal: SimplePeerSignal }) => {
+      if (data.userId !== remoteUserId) return;
+      
+      if (!peerRef.current && localStream) {
+        initializePeerConnection(localStream, data.signal);
+      } else if (peerRef.current) {
+        peerRef.current.signal(data.signal);
+      }
+    };
+    
+    socket.on('signal', handleSignal);
+    
+    return () => {
+      socket.off('signal', handleSignal);
+    };
+  }, [socket, remoteUserId, localStream, initializePeerConnection]);
 
   // Toggle video
   const toggleVideo = () => {
