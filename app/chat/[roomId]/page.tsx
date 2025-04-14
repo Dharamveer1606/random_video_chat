@@ -93,14 +93,14 @@ export default function ChatPage({ params }: ChatPageProps) {
       }
     };
 
-    socket.on('match:success', handleParticipants);
+    socket.on('room:participants', handleParticipants);
     socket.on('user:left', handleUserLeft);
 
     // Request current participants when joining
     socket.emit('room:participants', { roomId });
 
     return () => {
-      socket.off('match:success', handleParticipants);
+      socket.off('room:participants', handleParticipants);
       socket.off('user:left', handleUserLeft);
     };
   }, [socket, userId, roomId, router, remoteUserId]);

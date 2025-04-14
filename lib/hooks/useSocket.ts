@@ -44,6 +44,14 @@ interface MatchSuccessData {
   roomId: string;
 }
 
+interface RoomParticipantsResponse {
+  participants: string[];
+}
+
+interface RoomParticipantsRequest {
+  roomId: string;
+}
+
 interface SocketEvents {
   'connect': () => void;
   'connect_error': (error: Error) => void;
@@ -59,10 +67,25 @@ interface SocketEvents {
   'message:send': (data: MessageSendData) => void;
   'signal': (data: SignalData) => void;
   'ping': () => void;
+  'room:participants': (data: RoomParticipantsRequest) => void;
+  'user:left': (userId: string) => void;
+}
+
+// For receiving events
+interface ServerToClientEvents {
+  'match:success': (data: MatchSuccessData) => void;
+  'room:participants': (data: RoomParticipantsResponse) => void;
+  'user:left': (userId: string) => void;
+  'connect': () => void;
+  'connect_error': (error: Error) => void;
+  'error': (error: Error) => void;
+  'disconnect': (reason: string) => void;
+  'pong': () => void;
+  'connection:established': (data: ConnectionEstablishedData) => void;
 }
 
 // Initialize socket with proper typing
-let socket: Socket<SocketEvents> | null = null;
+let socket: Socket<ServerToClientEvents, SocketEvents> | null = null;
 
 export const useSocket = (userId: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -80,7 +103,7 @@ export const useSocket = (userId: string) => {
         autoConnect: true,
         forceNew: false,
         transports: ['websocket', 'polling']
-      });
+      }) as Socket<ServerToClientEvents, SocketEvents>;
     }
 
     // Set up event listeners
@@ -155,7 +178,7 @@ export const useSocket = (userId: string) => {
             autoConnect: true,
             forceNew: true,
             transports: ['polling'] // Force polling only
-          });
+          }) as Socket<ServerToClientEvents, SocketEvents>;
           
           // Reattach listeners
           newSocket.on('connect', onConnect);
@@ -221,7 +244,7 @@ export const useSocket = (userId: string) => {
           const newSocket = io(SOCKET_SERVER_URL, {
             transports: ['polling'],
             forceNew: true
-          });
+          }) as Socket<ServerToClientEvents, SocketEvents>;
           newSocket.on('connect', () => {
             console.log('Connected via polling, sending match request');
             if (userId) newSocket.emit('user:join', userId);
@@ -280,7 +303,14 @@ export const useSocket = (userId: string) => {
     if (socket) {
       socket.connect();
     } else {
-      socket = io(SOCKET_SERVER_URL);
+      socket = io(SOCKET_SERVER_URL, {
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        timeout: 20000,
+        autoConnect: true,
+        forceNew: true,
+        transports: ['websocket', 'polling']
+      }) as Socket<ServerToClientEvents, SocketEvents>;
       socket.connect();
     }
   };
