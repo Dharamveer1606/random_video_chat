@@ -9,7 +9,7 @@ interface MatchPreferences {
   [key: string]: string | number | boolean;
 }
 
-interface MessageData {
+export interface MessageData {
   roomId: string;
   content: string;
   senderId: string;
@@ -82,6 +82,7 @@ interface ServerToClientEvents {
   'disconnect': (reason: string) => void;
   'pong': () => void;
   'connection:established': (data: ConnectionEstablishedData) => void;
+  'message:received': (message: MessageData) => void;
 }
 
 // Initialize socket with proper typing

@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useSocket } from '../lib/hooks/useSocket';
+import { MessageData, useSocket } from '../lib/hooks/useSocket';
 import { ChatMessage } from '../types';
 
 interface TextChatProps {
   userId: string;
   roomId: string;
+  userName?: string;
 }
 
-const TextChat: React.FC<TextChatProps> = ({ userId, roomId }) => {
+const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -18,8 +19,17 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId }) => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewMessage = (message: ChatMessage) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+    const handleNewMessage = (message: MessageData) => {
+      // Convert MessageData to ChatMessage
+      const chatMessage: ChatMessage = {
+        id: uuidv4(), // Generate a new ID since MessageData doesn't have one
+        senderId: message.senderId,
+        content: message.content,
+        timestamp: new Date(message.timestamp), // Convert string to Date
+        isRead: false, // Default to unread
+      };
+      
+      setMessages((prevMessages) => [...prevMessages, chatMessage]);
     };
 
     socket.on('message:received', handleNewMessage);
@@ -47,7 +57,15 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId }) => {
       isRead: false,
     };
 
-    sendMessage(roomId, newMessage);
+    // Create a proper MessageData object that includes roomId
+    const messageData = {
+      roomId,
+      content: inputValue,
+      senderId: userId,
+      timestamp: new Date().toISOString(),
+    };
+
+    sendMessage(roomId, messageData);
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputValue('');
   };
