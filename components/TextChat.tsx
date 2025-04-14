@@ -6,10 +6,9 @@ import { ChatMessage } from '../types';
 interface TextChatProps {
   userId: string;
   roomId: string;
-  userName?: string;
 }
 
-const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
+const TextChat: React.FC<TextChatProps> = ({ userId, roomId }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);

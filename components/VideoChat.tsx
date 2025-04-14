@@ -24,6 +24,7 @@ const VideoChat: React.FC<VideoChatProps> = ({
     toggleVideo,
     toggleAudio,
     endCall,
+    initializePeerConnection,
   } = useWebRTC({
     userId,
     roomId,
@@ -33,11 +34,13 @@ const VideoChat: React.FC<VideoChatProps> = ({
   const { leaveChat } = useSocket(userId);
 
   useEffect(() => {
-    // Set up any necessary cleanup
+    if (remoteUserId) {
+      initializePeerConnection();
+    }
     return () => {
       endCall();
     };
-  }, []);
+  }, [remoteUserId, initializePeerConnection, endCall]);
 
   const handleEndCall = () => {
     endCall();

@@ -183,6 +183,24 @@ export const useWebRTC = ({ userId, roomId, remoteUserId }: UseWebRTCProps) => {
     setIsConnected(false);
   };
 
+  useEffect(() => {
+    if (localStream) {
+      initializePeerConnection();
+    }
+  }, [localStream, initializePeerConnection]);
+
+  useEffect(() => {
+    if (remoteUserId) {
+      initializePeerConnection();
+    }
+  }, [remoteUserId, initializePeerConnection]);
+
+  useEffect(() => {
+    return () => {
+      endCall();
+    };
+  }, [endCall]);
+
   return {
     localStream,
     remoteStream,

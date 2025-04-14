@@ -1,5 +1,6 @@
 import { createServer } from 'http';
-import { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { Server } from 'socket.io';
 import { initializeSocketServer } from '../../../server/socket';
 
 // Create an HTTP server
@@ -15,15 +16,23 @@ httpServer.listen(port, () => {
 });
 
 // This is a dummy API route handler - the actual WebSocket server runs separately
-export async function GET(request: NextRequest) {
-  return new Response(JSON.stringify({ 
-    status: 'Socket.io server running', 
-    port 
-  }), {
-    headers: {
-      'Content-Type': 'application/json',
+export async function GET() {
+  const io = new Server({
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST'],
     },
   });
+
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
+  });
+
+  return NextResponse.json({ success: true });
 }
 
 export const dynamic = 'force-dynamic'; 

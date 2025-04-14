@@ -12,10 +12,16 @@ interface ChatPageProps {
   params: {
     roomId: string;
   };
-  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default function ChatPage({ params, searchParams }: ChatPageProps) {
+interface SessionUser {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+export default function ChatPage({ params }: ChatPageProps) {
   const { roomId } = params;
   const router = useRouter();
   const { data: session } = useSession();
@@ -31,7 +37,7 @@ export default function ChatPage({ params, searchParams }: ChatPageProps) {
   
   useEffect(() => {
     // Try to get user ID from session (if available)
-    const sessionUserId = (session?.user as any)?.id;
+    const sessionUserId = (session?.user as SessionUser)?.id;
     
     if (sessionUserId) {
       setUserId(sessionUserId);
@@ -165,11 +171,11 @@ export default function ChatPage({ params, searchParams }: ChatPageProps) {
             <TextChat
               userId={userId}
               roomId={roomId}
-              userName={session?.user?.name || undefined}
+              userName={(session?.user as SessionUser)?.name || undefined}
             />
           </div>
         )}
       </div>
     </main>
   );
-} 
+}

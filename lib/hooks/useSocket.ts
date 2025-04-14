@@ -8,6 +8,16 @@ let socket: Socket | null = null;
 // Socket server URL from environment variables or default
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
+interface SocketEvent {
+  type: string;
+  data: unknown;
+}
+
+interface SocketError {
+  message: string;
+  code?: string;
+}
+
 export const useSocket = (userId?: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const router = useRouter();
@@ -227,6 +237,18 @@ export const useSocket = (userId?: string) => {
       socket = io(SOCKET_SERVER_URL);
       socket.connect();
     }
+  };
+
+  const handleSocketEvent = (event: SocketEvent) => {
+    // Handle socket events
+  };
+
+  const handleSocketError = (error: SocketError) => {
+    // Handle socket errors
+  };
+
+  const handleSocketMessage = (message: string) => {
+    // Handle socket messages
   };
 
   return {
