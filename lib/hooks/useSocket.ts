@@ -19,7 +19,27 @@ interface MessageData {
   timestamp: string;
 }
 
-export const useSocket = (userId?: string) => {
+interface MatchRequestData {
+  userId: string;
+  preferences: string;
+}
+
+interface ChatLeaveData {
+  userId: string;
+  roomId: string;
+}
+
+interface MessageSendData {
+  roomId: string;
+  message: MessageData;
+}
+
+interface SignalData {
+  userId: string;
+  signal: RTCSessionDescriptionInit | RTCIceCandidate;
+}
+
+export const useSocket = (userId: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const router = useRouter();
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
@@ -43,11 +63,9 @@ export const useSocket = (userId?: string) => {
       setIsConnected(true);
       console.log('Socket connected successfully');
       
-      // Join as a user if we have a userId
-      if (userId) {
-        console.log('Joining as user:', userId);
-        socket?.emit('user:join', userId);
-      }
+      // Join as a user
+      console.log('Joining as user:', userId);
+      socket?.emit('user:join', userId);
       
       // Set up heartbeat to keep connection alive
       if (heartbeatInterval.current) {
@@ -197,10 +215,11 @@ export const useSocket = (userId?: string) => {
     
     function sendMatchRequest() {
       console.log('Sending match request for user:', userId);
-      socket?.emit('match:request', {
+      const matchRequestData: MatchRequestData = {
         userId,
         preferences: JSON.stringify(preferences)
-      });
+      };
+      socket?.emit('match:request', matchRequestData);
     }
   };
 
@@ -213,20 +232,23 @@ export const useSocket = (userId?: string) => {
   // Function to leave a chat
   const leaveChat = (roomId: string) => {
     if (!userId || !socket?.connected) return;
-    socket.emit('chat:leave', { userId, roomId });
+    const chatLeaveData: ChatLeaveData = { userId, roomId };
+    socket.emit('chat:leave', chatLeaveData);
     router.push('/');
   };
 
   // Function to send a chat message
   const sendMessage = (roomId: string, message: MessageData) => {
     if (!socket?.connected) return;
-    socket.emit('message:send', { roomId, message });
+    const messageSendData: MessageSendData = { roomId, message };
+    socket.emit('message:send', messageSendData);
   };
 
   // Function to send WebRTC signaling data
   const sendSignal = (targetUserId: string, signal: RTCSessionDescriptionInit | RTCIceCandidate) => {
     if (!socket?.connected) return;
-    socket.emit('signal', { userId: targetUserId, signal });
+    const signalData: SignalData = { userId: targetUserId, signal };
+    socket.emit('signal', signalData);
   };
 
   // Function to manually reconnect the socket
