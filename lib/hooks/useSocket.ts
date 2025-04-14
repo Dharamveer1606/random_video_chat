@@ -19,11 +19,6 @@ interface MessageData {
   timestamp: string;
 }
 
-interface SignalData {
-  userId: string;
-  signal: RTCSessionDescriptionInit | RTCIceCandidate;
-}
-
 export const useSocket = (userId?: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const router = useRouter();
@@ -100,7 +95,7 @@ export const useSocket = (userId?: string) => {
     socket.on('disconnect', onDisconnect);
     socket.on('match:success', onMatchSuccess);
     socket.on('pong', () => console.log('Received pong from server'));
-    socket.on('connection:established', (data) => {
+    socket.on('connection:established', (data: { socketId: string }) => {
       console.log('Connection established with server, socket ID:', data.socketId);
     });
 
