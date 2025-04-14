@@ -12,26 +12,16 @@ interface MatchPreferences {
   [key: string]: string | number | boolean;
 }
 
-interface SocketEvent {
-  type: string;
-  data: unknown;
-}
-
-interface SocketError {
-  message: string;
-  code?: string;
-}
-
-interface SignalData {
-  userId: string;
-  signal: RTCSessionDescriptionInit | RTCIceCandidate;
-}
-
 interface MessageData {
   roomId: string;
   content: string;
   senderId: string;
   timestamp: string;
+}
+
+interface SignalData {
+  userId: string;
+  signal: RTCSessionDescriptionInit | RTCIceCandidate;
 }
 
 export const useSocket = (userId?: string) => {
