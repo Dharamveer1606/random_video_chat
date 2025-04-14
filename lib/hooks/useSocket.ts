@@ -2,9 +2,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-// Socket instance
-let socket: Socket | null = null;
-
 // Socket server URL from environment variables or default
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
@@ -64,6 +61,9 @@ interface SocketEvents {
   'ping': () => void;
 }
 
+// Initialize socket with proper typing
+let socket: Socket<SocketEvents> | null = null;
+
 export const useSocket = (userId: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const router = useRouter();
@@ -76,10 +76,10 @@ export const useSocket = (userId: string) => {
       socket = io(SOCKET_SERVER_URL, {
         reconnectionAttempts: 10,
         reconnectionDelay: 1000,
-        timeout: 20000, // Increase timeout to 20 seconds
+        timeout: 20000,
         autoConnect: true,
         forceNew: false,
-        transports: ['websocket', 'polling'] // Try WebSocket first, then fall back to polling
+        transports: ['websocket', 'polling']
       });
     }
 
@@ -101,7 +101,7 @@ export const useSocket = (userId: string) => {
         if (socket?.connected) {
           socket.emit('ping');
         }
-      }, 15000); // Send ping every 15 seconds
+      }, 15000);
     };
 
     const onConnectError = (error: Error) => {
@@ -118,7 +118,6 @@ export const useSocket = (userId: string) => {
       console.log('Socket disconnected:', reason);
       setIsConnected(false);
       
-      // Clear heartbeat on disconnect
       if (heartbeatInterval.current) {
         clearInterval(heartbeatInterval.current);
         heartbeatInterval.current = null;
@@ -127,7 +126,6 @@ export const useSocket = (userId: string) => {
 
     const onMatchSuccess = (data: MatchSuccessData) => {
       console.log('Match found, roomId:', data.roomId);
-      // Redirect to the chat room when a match is found
       router.push(`/chat/${data.roomId}`);
     };
 
