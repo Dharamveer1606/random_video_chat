@@ -12,9 +12,10 @@ interface ChatPageProps {
   params: {
     roomId: string;
   };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default function ChatPage({ params }: ChatPageProps) {
+export default function ChatPage({ params, searchParams }: ChatPageProps) {
   const { roomId } = params;
   const router = useRouter();
   const { data: session } = useSession();
