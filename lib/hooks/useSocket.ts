@@ -43,6 +43,27 @@ interface ConnectionEstablishedData {
   socketId: string;
 }
 
+interface MatchSuccessData {
+  roomId: string;
+}
+
+interface SocketEvents {
+  'connect': () => void;
+  'connect_error': (error: Error) => void;
+  'error': (error: Error) => void;
+  'disconnect': (reason: string) => void;
+  'match:success': (data: MatchSuccessData) => void;
+  'pong': () => void;
+  'connection:established': (data: ConnectionEstablishedData) => void;
+  'user:join': (userId: string) => void;
+  'match:request': (data: MatchRequestData) => void;
+  'match:cancel': (userId: string) => void;
+  'chat:leave': (data: ChatLeaveData) => void;
+  'message:send': (data: MessageSendData) => void;
+  'signal': (data: SignalData) => void;
+  'ping': () => void;
+}
+
 export const useSocket = (userId: string) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const router = useRouter();
@@ -104,7 +125,7 @@ export const useSocket = (userId: string) => {
       }
     };
 
-    const onMatchSuccess = (data: { roomId: string }) => {
+    const onMatchSuccess = (data: MatchSuccessData) => {
       console.log('Match found, roomId:', data.roomId);
       // Redirect to the chat room when a match is found
       router.push(`/chat/${data.roomId}`);
