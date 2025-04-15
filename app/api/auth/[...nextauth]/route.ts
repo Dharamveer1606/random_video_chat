@@ -1,4 +1,4 @@
-import NextAuth, { AuthOptions } from 'next-auth';
+import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,16 +17,16 @@ declare module 'next-auth' {
   }
 }
 
-// Ultra-simplified NextAuth configuration with only one provider
-export const authOptions: AuthOptions = {
+// Extremely simplified NextAuth configuration
+const handler = NextAuth({
   providers: [
-    // Only use credentials provider for guest access
+    // ONLY Credentials provider
     CredentialsProvider({
-      id: 'credentials',
-      name: 'Guest Access',
+      id: "guest-credentials",
+      name: "Guest Access",
       credentials: {},
       async authorize() {
-        // Create guest user with random ID and name
+        // Create a guest user with random name
         return {
           id: uuidv4(),
           name: `Guest-${Math.floor(Math.random() * 10000)}`
@@ -34,47 +34,36 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  // Required secret for JWT encryption
   secret: process.env.NEXTAUTH_SECRET,
+  // JWT session configuration
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  // Simple callbacks
   callbacks: {
     async jwt({ token, user }) {
-      // Store user ID in JWT token
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
         token.name = user.name;
       }
       return token;
     },
     async session({ session, token }) {
-      // Add user ID to session
       if (session.user) {
-        session.user.id = token.sub || '';
-        session.user.name = token.name || null;
+        // Fix the type issue by using type assertion
+        session.user.id = token.id as string;
       }
       return session;
     },
   },
+  // Pages configuration
   pages: {
     signIn: '/',
-    error: '/',
+    error: '/'
   },
-  logger: {
-    error(code, metadata) {
-      console.error(code, metadata);
-    },
-    warn(code) {
-      console.warn(code);
-    },
-    debug(code, metadata) {
-      console.debug(code, metadata);
-    },
-  },
-};
-
-const handler = NextAuth(authOptions);
+});
 
 export { handler as GET, handler as POST };
 

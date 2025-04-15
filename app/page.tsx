@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import MatchingInterface from '../components/MatchingInterface';
 
+// Simplified user interface matching our NextAuth config
 interface SessionUser {
   id: string;
   name?: string | null;
@@ -47,7 +48,7 @@ export default function Home() {
   };
 
   // Get effective user ID from session or guest ID
-  const sessionUserId = (session?.user as SessionUser)?.id;
+  const sessionUserId = session?.user?.id || '';
   const userId = sessionUserId || guestId;
 
   return (
