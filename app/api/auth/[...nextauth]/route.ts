@@ -40,7 +40,7 @@ interface Session {
 // Configure NextAuth with authentication providers
 const handler = NextAuth({
   providers: [
-    // Only enable Google provider when credentials are properly set
+    // Only include Google provider if environment variables are set
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
           GoogleProvider({
