@@ -62,8 +62,8 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
       roomId,
       content: inputValue,
       senderId: userId,
-      senderName: userName || 'Anonymous',
       timestamp: new Date().toISOString(),
+      senderName: userName || 'You', // Use userName here
     };
 
     sendMessage(roomId, messageData);
@@ -77,6 +77,11 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // Get display name for chat
+  const getDisplayName = () => {
+    return userName || 'You';
   };
 
   return (
@@ -107,7 +112,7 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
                   }`}
                 >
                   {message.senderId === userId && (
-                    <div className="text-xs text-blue-200 mb-1">{userName || 'You'}</div>
+                    <div className="text-xs text-blue-200 mb-1">{getDisplayName()}</div>
                   )}
                   <div className="text-sm break-words">{message.content}</div>
                   <div
@@ -137,7 +142,7 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={`Type a message as ${userName || 'Anonymous'}...`}
+            placeholder={`Type a message as ${getDisplayName()}...`}
             className="flex-1 py-2 px-4 bg-gray-800 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button

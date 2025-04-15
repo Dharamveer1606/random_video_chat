@@ -8,11 +8,11 @@ import TextChat from '../../../components/TextChat';
 import VideoChat from '../../../components/VideoChat';
 import { useSocket } from '../../../lib/hooks/useSocket';
 
-// Define page props according to Next.js App Router conventions
-type PageProps = {
-  params: { roomId: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
+interface ChatPageProps {
+  params: {
+    roomId: string;
+  };
+}
 
 interface SessionUser {
   id?: string;
@@ -21,7 +21,7 @@ interface SessionUser {
   image?: string | null;
 }
 
-export default function ChatPage({ params }: PageProps) {
+export default function ChatPage({ params }: ChatPageProps) {
   const { roomId } = params;
   const router = useRouter();
   const { data: session } = useSession();
@@ -178,4 +178,4 @@ export default function ChatPage({ params }: PageProps) {
       </div>
     </main>
   );
-} 
+}

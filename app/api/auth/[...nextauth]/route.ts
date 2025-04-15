@@ -1,5 +1,4 @@
-import NextAuth, { DefaultSession, User as NextAuthUser } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
+import NextAuth, { AuthOptions, DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,6 +17,24 @@ declare module 'next-auth' {
     email?: string | null;
     image?: string | null;
   }
+}
+
+interface AuthUser {
+  id: string;
+  name: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface SessionUser {
+  id: string;
+  name: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface Session {
+  user: SessionUser;
 }
 
 // Configure NextAuth with authentication providers
@@ -46,7 +63,7 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: NextAuthUser }) {
+    async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
         token.name = user.name;
@@ -56,9 +73,9 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub!;
-        session.user.name = token.name;
-        session.user.image = token.picture;
+        session.user.id = token.sub || '';
+        session.user.name = token.name as string | null;
+        session.user.image = token.picture as string | null;
       }
       return session;
     },
@@ -67,7 +84,7 @@ const handler = NextAuth({
     signIn: '/',
     error: '/',
   },
-});
+}) satisfies AuthOptions;
 
 export { handler as GET, handler as POST };
 
