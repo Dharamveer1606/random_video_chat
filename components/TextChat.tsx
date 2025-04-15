@@ -6,6 +6,7 @@ import { ChatMessage } from '../types';
 interface TextChatProps {
   userId: string;
   roomId: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userName?: string;
 }
 
