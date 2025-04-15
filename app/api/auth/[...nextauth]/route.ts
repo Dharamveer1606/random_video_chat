@@ -17,41 +17,51 @@ declare module 'next-auth' {
   }
 }
 
+// Attempt to monkey-patch NextAuth to prevent Google authentication
+try {
+  // @ts-ignore - Hack to prevent Google authentication
+  global.NextAuthGoogleProvider = null;
+} catch (e) {
+  console.log("Failed to disable Google provider");
+}
+
 /**
- * Very minimal NextAuth configuration with only Guest access
- * No Google provider to avoid "client_id is required" errors
+ * This is a barebones NextAuth configuration with ONLY CredentialsProvider
+ * to avoid "client_id is required" errors.
  */
+
+// HACK: This overrides the next-auth provider list at runtime to filter out Google
+// @ts-ignore - Intentionally modifying the internal list
+const originalGetProviders = NextAuth.getProviders;
+// @ts-ignore - Intentionally modifying the internal list
+NextAuth.getProviders = () => {
+  // Filter out any google provider
+  const providers = originalGetProviders?.() || {};
+  const filteredProviders = Object.fromEntries(
+    Object.entries(providers).filter(([key]) => key !== "google")
+  );
+  return filteredProviders;
+};
+
+// Create a minimal NextAuth configuration
 const handler = NextAuth({
   providers: [
-    // ONLY Credentials provider with Guest access
     CredentialsProvider({
+      id: "credentials",
       name: "Guest",
       credentials: {},
-      async authorize() {
+      authorize() {
         return {
           id: uuidv4(),
-          name: `Guest-${Math.floor(Math.random() * 10000)}`,
+          name: `Guest-${Math.floor(Math.random() * 10000)}`
         };
-      },
-    }),
-  ],
-  callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub || "";
       }
-      return session;
-    },
-  },
+    })
+  ],
+  session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/",
-  },
-  // Don't debug in production
-  debug: process.env.NODE_ENV === "development",
+  debug: false,
+  pages: { signIn: "/" }
 });
 
 export { handler as GET, handler as POST };
