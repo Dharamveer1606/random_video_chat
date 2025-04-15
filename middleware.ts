@@ -1,22 +1,28 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// Middleware to intercept any Google authentication attempts
+// Enhanced middleware to block ALL Google authentication attempts
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const url = pathname + search;
   
-  // Block any Google-related auth paths
-  if (url.includes("google") || 
-      url.includes("accounts.google.com") || 
-      pathname.includes("/api/auth/signin") && pathname !== "/api/auth/signin/credentials") {
+  // Block ANY path that could be related to Google auth
+  if (
+    url.includes("google") || 
+    url.includes("accounts.google") || 
+    pathname.includes("/api/auth/signin") && pathname !== "/api/auth/signin/credentials" ||
+    pathname.includes("/api/auth/callback") && pathname !== "/api/auth/callback/credentials" ||
+    pathname.includes("/api/auth/oauth")
+  ) {
+    console.log("Blocked Google auth request:", pathname);
     // Redirect to home page
     return NextResponse.redirect(new URL("/", request.url));
   }
   
-  // Special handling for providers endpoint
+  // Completely replace the providers endpoint response
   if (pathname === "/api/auth/providers") {
-    // Return only credentials provider in the response
+    console.log("Intercepted providers request");
+    // Return ONLY the credentials provider
     return NextResponse.json({
       credentials: {
         id: "credentials",
@@ -32,10 +38,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Apply this middleware to all auth-related paths
+// Apply this middleware to ALL auth-related paths
 export const config = {
   matcher: [
     "/api/auth/:path*",
-    "/api/auth/providers",
   ],
 }; 

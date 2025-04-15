@@ -5,12 +5,13 @@ import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import MatchingInterface from '../components/MatchingInterface';
 
-// Simplified user interface matching our NextAuth config
+// Define the session user type
 interface SessionUser {
-  id: string;
+  id?: string;
   name?: string | null;
 }
 
+// This is a simplified Home component with ONLY guest access
 export default function Home() {
   const { data: session } = useSession();
   const [guestId, setGuestId] = useState<string>('');
@@ -48,7 +49,7 @@ export default function Home() {
   };
 
   // Get effective user ID from session or guest ID
-  const sessionUserId = session?.user?.id || '';
+  const sessionUserId = session?.user ? (session.user as SessionUser).id || '' : '';
   const userId = sessionUserId || guestId;
 
   return (
@@ -89,7 +90,7 @@ export default function Home() {
             // Show matching interface if authenticated or guest
             <MatchingInterface
               userId={userId}
-              userName={session?.user?.name || undefined}
+              userName={session?.user?.name || 'Guest'}
             />
           )}
         </div>
@@ -101,7 +102,7 @@ export default function Home() {
               onClick={handleSignOut}
               className="text-gray-400 hover:text-white text-sm"
             >
-              {session ? 'Sign out' : 'Reset guest session'}
+              Reset session
             </button>
           </div>
         )}
