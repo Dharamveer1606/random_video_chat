@@ -17,75 +17,41 @@ declare module 'next-auth' {
   }
 }
 
-// Create a minimal NextAuth handler that only uses credentials
+/**
+ * Very minimal NextAuth configuration with only Guest access
+ * No Google provider to avoid "client_id is required" errors
+ */
 const handler = NextAuth({
-  // ONLY include the credentials provider
   providers: [
+    // ONLY Credentials provider with Guest access
     CredentialsProvider({
-      id: "credentials", // Keep ID as "credentials" for compatibility
-      name: "Guest Access",
+      name: "Guest",
       credentials: {},
       async authorize() {
-        const guestId = uuidv4();
-        const guestName = `Guest-${Math.floor(Math.random() * 10000)}`;
-        
-        // Return a minimal user object
         return {
-          id: guestId,
-          name: guestName
+          id: uuidv4(),
+          name: `Guest-${Math.floor(Math.random() * 10000)}`,
         };
       },
     }),
   ],
-  
-  // Security settings
-  secret: process.env.NEXTAUTH_SECRET,
-  
-  // JWT settings
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  
-  // Callbacks for token and session handling
   callbacks: {
-    async jwt({ token, user }) {
-      // Store user info in token when signing in
-      if (user) {
-        token.userId = user.id;
-        token.userName = user.name;
-      }
-      return token;
-    },
-    
     async session({ session, token }) {
-      // Add token data to session
       if (session.user) {
-        session.user.id = token.userId as string;
-        session.user.name = token.userName as string | null;
+        session.user.id = token.sub || "";
       }
       return session;
     },
   },
-  
-  // Custom pages
-  pages: {
-    signIn: '/',
-    error: '/'
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
   },
-  
-  // Debug mode off for production
-  debug: process.env.NODE_ENV === 'development',
-  
-  // Disable non-credentials auth types
-  useSecureCookies: process.env.NODE_ENV === 'production',
-  
-  // Prevent error page redirects
-  theme: {
-    colorScheme: 'dark',
-    brandColor: '#3182ce',
-    logo: '',
-  }
+  pages: {
+    signIn: "/",
+  },
+  // Don't debug in production
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };
