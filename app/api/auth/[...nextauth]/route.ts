@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { v4 as uuidv4 } from 'uuid';
 
-// Define custom user type
+// Define custom types for TypeScript
 declare module 'next-auth' {
   interface User {
     id: string;
@@ -17,52 +17,75 @@ declare module 'next-auth' {
   }
 }
 
-// Extremely simplified NextAuth configuration
+// Create a minimal NextAuth handler that only uses credentials
 const handler = NextAuth({
+  // ONLY include the credentials provider
   providers: [
-    // ONLY Credentials provider
     CredentialsProvider({
-      id: "guest-credentials",
+      id: "credentials", // Keep ID as "credentials" for compatibility
       name: "Guest Access",
       credentials: {},
       async authorize() {
-        // Create a guest user with random name
+        const guestId = uuidv4();
+        const guestName = `Guest-${Math.floor(Math.random() * 10000)}`;
+        
+        // Return a minimal user object
         return {
-          id: uuidv4(),
-          name: `Guest-${Math.floor(Math.random() * 10000)}`
+          id: guestId,
+          name: guestName
         };
       },
     }),
   ],
-  // Required secret for JWT encryption
+  
+  // Security settings
   secret: process.env.NEXTAUTH_SECRET,
-  // JWT session configuration
+  
+  // JWT settings
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  // Simple callbacks
+  
+  // Callbacks for token and session handling
   callbacks: {
     async jwt({ token, user }) {
+      // Store user info in token when signing in
       if (user) {
-        token.id = user.id;
-        token.name = user.name;
+        token.userId = user.id;
+        token.userName = user.name;
       }
       return token;
     },
+    
     async session({ session, token }) {
+      // Add token data to session
       if (session.user) {
-        // Fix the type issue by using type assertion
-        session.user.id = token.id as string;
+        session.user.id = token.userId as string;
+        session.user.name = token.userName as string | null;
       }
       return session;
     },
   },
-  // Pages configuration
+  
+  // Custom pages
   pages: {
     signIn: '/',
     error: '/'
   },
+  
+  // Debug mode off for production
+  debug: process.env.NODE_ENV === 'development',
+  
+  // Disable non-credentials auth types
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  
+  // Prevent error page redirects
+  theme: {
+    colorScheme: 'dark',
+    brandColor: '#3182ce',
+    logo: '',
+  }
 });
 
 export { handler as GET, handler as POST };
