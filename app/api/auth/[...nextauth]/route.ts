@@ -1,4 +1,5 @@
-import NextAuth, { DefaultSession } from 'next-auth';
+import NextAuth, { DefaultSession, User as NextAuthUser } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,24 +11,13 @@ declare module 'next-auth' {
       id: string;
     } & DefaultSession['user'];
   }
-}
-
-interface AuthUser {
-  id: string;
-  name: string | null;
-  email?: string | null;
-  image?: string | null;
-}
-
-interface SessionUser {
-  id: string;
-  name: string | null;
-  email?: string | null;
-  image?: string | null;
-}
-
-interface Session {
-  user: SessionUser;
+  
+  interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  }
 }
 
 // Configure NextAuth with authentication providers
@@ -56,7 +46,7 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: NextAuthUser }) {
       if (user) {
         token.sub = user.id;
         token.name = user.name;
