@@ -6,10 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import MatchingInterface from '../components/MatchingInterface';
 
 interface SessionUser {
-  id?: string;
+  id: string;
   name?: string | null;
-  email?: string | null;
-  image?: string | null;
 }
 
 export default function Home() {
