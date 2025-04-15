@@ -1,6 +1,5 @@
 import NextAuth, { AuthOptions, DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
 import { v4 as uuidv4 } from 'uuid';
 
 // Extend the built-in session types
@@ -37,19 +36,10 @@ interface Session {
   user: SessionUser;
 }
 
-// Configure NextAuth with authentication providers
+// Configure NextAuth with only the CredentialsProvider
 const handler = NextAuth({
   providers: [
-    // Only include Google provider if environment variables are set
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-    // Add credentials provider for anonymous/guest access
+    // Use only credentials provider for anonymous/guest access
     CredentialsProvider({
       name: 'Guest Access',
       credentials: {},
