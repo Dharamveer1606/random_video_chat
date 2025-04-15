@@ -9,34 +9,9 @@ declare module 'next-auth' {
       id: string;
     } & DefaultSession['user'];
   }
-  
-  interface User {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  }
 }
 
-interface AuthUser {
-  id: string;
-  name: string | null;
-  email?: string | null;
-  image?: string | null;
-}
-
-interface SessionUser {
-  id: string;
-  name: string | null;
-  email?: string | null;
-  image?: string | null;
-}
-
-interface Session {
-  user: SessionUser;
-}
-
-// Configure NextAuth with only the CredentialsProvider
+// Simple NextAuth handler with only Guest access
 const handler = NextAuth({
   providers: [
     // Use only credentials provider for anonymous/guest access
@@ -62,7 +37,6 @@ const handler = NextAuth({
       if (user) {
         token.sub = user.id;
         token.name = user.name;
-        token.picture = user.image;
       }
       return token;
     },
@@ -70,7 +44,6 @@ const handler = NextAuth({
       if (session.user) {
         session.user.id = token.sub || '';
         session.user.name = token.name as string | null;
-        session.user.image = token.picture as string | null;
       }
       return session;
     },
