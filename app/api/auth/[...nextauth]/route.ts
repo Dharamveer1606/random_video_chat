@@ -1,7 +1,34 @@
-import NextAuth from 'next-auth';
+import NextAuth, { DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { v4 as uuidv4 } from 'uuid';
+
+// Extend the built-in session types
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+    } & DefaultSession['user'];
+  }
+}
+
+interface AuthUser {
+  id: string;
+  name: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface SessionUser {
+  id: string;
+  name: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface Session {
+  user: SessionUser;
+}
 
 // Configure NextAuth with authentication providers
 const handler = NextAuth({
@@ -33,7 +60,7 @@ const handler = NextAuth({
       if (user) {
         token.sub = user.id;
         token.name = user.name;
-        token.picture = (user as any).image;
+        token.picture = user.image;
       }
       return token;
     },
@@ -53,3 +80,4 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
+

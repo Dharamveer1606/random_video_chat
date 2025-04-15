@@ -105,6 +105,9 @@ const TextChat: React.FC<TextChatProps> = ({ userId, roomId, userName }) => {
                       : 'bg-gray-700 text-white rounded-bl-none'
                   }`}
                 >
+                  {message.senderId === userId && userName && (
+                    <div className="text-xs text-blue-200 mb-1">{userName}</div>
+                  )}
                   <div className="text-sm break-words">{message.content}</div>
                   <div
                     className={`text-xs mt-1 ${
